@@ -1,0 +1,112 @@
+---
+title: "Simple Kriging"
+author: "Yuting Fan"
+date: "2022-10-03"
+output: html_document
+---
+
+One way to build a kriging model in R is using 'krige' function in 'gstat' package. Here is an example to show the code of building simple kriging model corresponding to the theoretical formula. 
+
+Consider a spatial process $Y(s)$ with known $C_Y(s,u)=cov(Y(s),Y(u))$ and known $E(Y(s))$. The goal is to predict $Y(s)$ based on $\boldsymbol{Z}=(Z(s_1),\dots,Z(s_n))^{'}$ observed according to $Z(s_i)=Y(s_i)+\epsilon(s_i)$. 
+
+The predictors of $Y(s_0)$ is $\hat{Y}_{sk}(s_0)=\mu(s_0)+\boldsymbol{c}^{'}\Sigma_{Z}^{-1}(\boldsymbol{Z}-\mu)$, where $\boldsymbol{c}=(C_Y(s_0,s_1),\dots,C_Y(s_0,s_n))^{'}$ and $\Sigma_Z$ is the $n \times n$ matrix whose $(i,j)-th$ element is $C_Y(s_i,s_j)$, and the mean-squared prediction error is $\sigma^{2}_{sk}(s_0)=C_Y(s_0,s_0)-\boldsymbol{c}^{'}\Sigma_{Z}^{-1}\boldsymbol{c}$.
+
+Here, I assume $C_Y(s,u)$ is a Matern covariance function with parameters specified in the following chunk. For simplicity, $E(Y(s))$ is assumed a constant 0. 
+
+```{r, message=FALSE, warning=FALSE}
+library(knitr)
+library(geoR)
+library(gstat)
+library(sp)
+```
+
+# Create data
+
+Set the mean function and the parameters of covariance function.
+
+```{r}
+# parameters of spatial process
+sill = 5 # sigma^2
+range = .25
+smoothness = 0.5
+nugget = 0
+mean = 0
+```
+
+Generate a realization of Gaussian random fields with Matern covariance function. The location is $s \in [0,5]\times[0,5]$.
+
+```{r, includes=FALSE}
+# generate observed data
+n = 5
+r = grf(n, 
+        grid = "irreg", 
+        xlims = c(0, 5), ylims = c(0, 5),
+        nsim = 1, 
+        cov.model = "matern",
+        cov.pars = c(sill, range),
+        kappa = smoothness, nugget = nugget,
+        mean = mean)
+
+data = data.frame(response = r$data,
+                  x = r$coords[,1],
+                  y = r$coords[,2])
+coordinates(data) = ~x+y
+
+# location for prediction
+pred_loc = data.frame(x = c(3),
+                      y = c(3))
+newdata = data.frame(x = pred_loc$x,
+                     y = pred_loc$y)
+coordinates(newdata) = ~x+y
+```
+
+The number of observed locations is 5. The location to predict is (3,3).
+
+```{r}
+df = data.frame(x = r$coords[,1],
+                y = r$coords[,2],
+                value = r$data)
+kable(df, caption = "Observation")
+kable(pred_loc, caption = "To predict")
+```
+
+# Build the model using krige
+
+```{r}
+# build kriging model using gstat package
+m <- vgm(psill = sill, "Mat", range = range, nugget = nugget, kappa = smoothness)
+model = krige(response ~ 1, data, newdata = newdata, model = m, beta = 0)
+```
+
+# Compute from scratch
+
+Compute the predictor and MSPE of simple kriging acoording to the observation $Z$.
+
+```{r}
+Z = as.matrix(data@data)
+
+# compute the distance
+distmat = as.matrix(dist(x = rbind(data@coords, newdata@coords), method = "euclidean", diag = TRUE, upper = TRUE))
+distmat_obs = distmat[1:n, 1:n]
+distmat_pred = distmat[1:n,n+1, drop = FALSE]
+
+# \Sigma_Z, c, and w
+cov_funct = GPvecchia::MaternFun(distmat_obs, covparms = c(sill, range, smoothness)) # \Sigma_Z
+cov_vect = GPvecchia::MaternFun(distmat_pred, covparms = c(sill, range, smoothness)) # c
+w = solve(cov_funct)%*%cov_vect
+
+# predictor and mspe
+pred = t(w)%*%(Z - mean)
+var = sill - t(cov_vect)%*%solve(cov_funct)%*%cov_vect
+```
+
+# Compare the results
+
+```{r}
+
+result = data.frame(prediction = c(model$var1.pred, pred),
+                    mspe = c(model$var1.var, var))
+rownames(result) = c("gstat::krige", "scratch")
+kable(result)
+```
+
