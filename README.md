@@ -1,4 +1,4 @@
 # test
 
 
-See the [link](https://htmlpreview.github.io/?https://github.com/ytfanfan/test/blob/main/Untitled.html).
+Click [Simple-Kriging.html](https://htmlpreview.github.io/?https://github.com/ytfanfan/MM-Spatial-statistics/blob/main/Simple-Kriging.html) to see the file in html format.
