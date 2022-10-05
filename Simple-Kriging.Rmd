@@ -47,7 +47,8 @@ r = grf(n,
         kappa = smoothness, nugget = nugget,
         mean = mean)
 
-data = data.frame(response = r$data,
+z = r$data + rnorm(length(r$data), 0, 1)
+data = data.frame(response = z,
                   x = r$coords[,1],
                   y = r$coords[,2])
 coordinates(data) = ~x+y

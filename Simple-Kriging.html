@@ -414,7 +414,8 @@ r = grf(n,
 ## grf: covariance model 1 is: exponential(sigmasq=5, phi=0.25)
 ## grf: decomposition algorithm used is:  cholesky 
 ## grf: End of simulation procedure. Number of realizations: 1</code></pre>
-<pre class="r"><code>data = data.frame(response = r$data,
+<pre class="r"><code>z = r$data + rnorm(length(r$data), 0, 1)
+data = data.frame(response = z,
                   x = r$coords[,1],
                   y = r$coords[,2])
 coordinates(data) = ~x+y
@@ -442,29 +443,29 @@ kable(df, caption = &quot;Observation&quot;)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">1.105074</td>
-<td align="right">3.633854</td>
-<td align="right">0.3437352</td>
+<td align="right">0.0694671</td>
+<td align="right">3.2889264</td>
+<td align="right">-1.2711003</td>
 </tr>
 <tr class="even">
-<td align="right">4.156440</td>
-<td align="right">1.282173</td>
-<td align="right">-1.0883513</td>
+<td align="right">4.2604373</td>
+<td align="right">4.2961561</td>
+<td align="right">1.0657226</td>
 </tr>
 <tr class="odd">
-<td align="right">4.861176</td>
-<td align="right">1.974563</td>
-<td align="right">-2.0465065</td>
+<td align="right">3.0660646</td>
+<td align="right">2.0346389</td>
+<td align="right">-1.9586742</td>
 </tr>
 <tr class="even">
-<td align="right">1.325803</td>
-<td align="right">1.655455</td>
-<td align="right">0.7367010</td>
+<td align="right">0.5794148</td>
+<td align="right">2.0818923</td>
+<td align="right">0.9586446</td>
 </tr>
 <tr class="odd">
-<td align="right">1.012130</td>
-<td align="right">1.840416</td>
-<td align="right">1.7717131</td>
+<td align="right">2.8652473</td>
+<td align="right">0.7538417</td>
+<td align="right">-1.7068090</td>
 </tr>
 </tbody>
 </table>
@@ -529,13 +530,13 @@ kable(result)</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">gstat::krige</td>
-<td align="right">-0.0003281</td>
-<td align="right">4.999999</td>
+<td align="right">-0.0309652</td>
+<td align="right">4.997824</td>
 </tr>
 <tr class="even">
 <td align="left">scratch</td>
-<td align="right">-0.0003281</td>
-<td align="right">4.999999</td>
+<td align="right">-0.0309652</td>
+<td align="right">4.997824</td>
 </tr>
 </tbody>
 </table>
